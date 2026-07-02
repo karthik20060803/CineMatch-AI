@@ -1,0 +1,6 @@
+similarity.pkl
+movie.pkl
+venv/
+__pycache__/
+.env
+*.pyc

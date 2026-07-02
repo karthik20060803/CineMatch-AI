@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Movie Recommender</title>
+
+    <style>
+
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            background:#000000;
+            text-align:center;
+            margin-top:50px;
+        }
+
+
+        .search-box{
+            width:400px;
+            margin:auto;
+            position:relative;
+
+        }
+        .movie-info{
+
+    padding:15px;
+
+}
+
+.movie-info h3{
+
+    color:#ffffff;
+
+    margin-bottom:10px;
+
+}
+
+.movie-info p{
+
+    color:#d1d5db;
+
+    margin:8px 0;
+
+    font-size:15px;
+
+}
+.poster{
+
+    width:100%;
+
+    height:330px;
+
+    object-fit:cover;
+
+    display:block;
+
+}
+
+        input{
+            width:100%;
+            padding:12px;
+            font-size:18px;
+        }
+
+        button{
+
+    background:linear-gradient(135deg,#7c3aed,#a855f7);
+
+    color:white;
+
+    border:none;
+
+    border-radius:50px;
+
+    padding:16px 45px;
+
+    font-size:18px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:0.3s;
+    margin-top:40px;
+
+
+}
+
+button:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 15px 30px rgba(124,58,237,.4);
+
+}
+        #suggestions{
+            position:absolute;
+            width:100%;
+            background:white;
+            border:1px solid #ccc;
+            border-top:none;
+            text-align:left;
+            z-index:1000;
+        }
+
+        .suggestion-item{
+            padding:10px;
+            cursor:pointer;
+        }
+
+        .suggestion-item:hover{
+            background:#eee;
+        }
+        .section-title{
+    color:white;
+    margin-top:50px;
+    margin-bottom:30px;
+}
+
+.movie-grid{
+
+    width:90%;
+    margin:40px auto;
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:30px;
+
+}
+
+.movie-card{
+
+    background:#08090a;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:0 15px 30px rgba(0,0,0,.35);
+
+    transition:.3s;
+
+    padding-bottom:20px;
+
+}
+
+.movie-card:hover{
+
+    transform:translateY(-10px);
+
+}
+
+.poster-placeholder{
+
+    height:320px;
+
+    background:#000000;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:80px;
+
+}
+
+.movie-card h3{
+
+    color:white;
+
+    font-size:22px;
+
+    font-weight:600;
+
+
+}
+
+.details-btn{
+
+    background:#770f73;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+
+    padding:10px 20px;
+
+    cursor:pointer;
+
+}
+
+.details-btn:hover{
+
+    background:#770f73;
+
+}
+.hero h1{
+
+    color: #770f73;
+
+    font-size: 58px;
+
+    margin: 0;
+
+    font-weight: 700;
+
+}
+.light{
+
+    position:fixed;
+
+    width:500px;
+
+    height:700px;
+
+    filter:blur(60px);
+
+    opacity:.22;
+
+    z-index:-1;
+
+}
+
+.left{
+
+    left:-120px;
+
+    top:-250px;
+
+    background:linear-gradient(
+
+        160deg,
+
+        rgba(168,85,247,.9),
+
+        transparent
+
+    );
+
+    transform:rotate(-30deg);
+
+}
+
+.right{
+
+    right:-120px;
+
+    top:-250px;
+
+    background:linear-gradient(
+
+        200deg,
+
+        rgba(168,85,247,.9),
+
+        transparent
+
+    );
+
+    transform:rotate(30deg);
+    
+
+}
+
+    </style>
+</head>
+<body>
+<div class="background-glow glow1"></div>
+<div class="background-glow glow2"></div>
+<div class="light left"></div>
+<div class="light right"></div>
+
+<div class="hero">
+
+    <h1>CineMatch AI</h1>
+
+    <p style="color: #770f73; font-size: 20px; margin-top: 10px;">
+        Discover your next favorite movie using AI
+    </p>
+
+</div>
+
+<form action="/recommend" method="POST">
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="movie"
+            name="movie"
+            autocomplete="off"
+            placeholder="Enter Movie Name"
+            required>
+
+        <div id="suggestions"></div>
+
+    </div>
+
+    <button id="recommend-btn" type="submit">
+    <span id="btn-text">Recommend</span>
+    <span id="loader" class="loader"></span>
+</button>
+
+</form>
+
+{% if recommendations %}
+
+<h2 class="section-title">Recommended Movies</h2>
+
+<div class="movie-grid">
+
+{% for movie in recommendations %}
+
+<div class="movie-card">
+
+    <img src="{{ movie.poster }}" class="poster">
+
+    <div class="movie-info">
+
+        <h3>{{ movie.title }}</h3>
+
+        <p>⭐ {{ movie.rating }}</p>
+
+        <p>{{ movie.genre }}</p>
+
+        <p>{{ movie.year }}</p>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endif %}
+
+
+<script>
+
+const input=document.getElementById("movie");
+const suggestions=document.getElementById("suggestions");
+
+input.addEventListener("input",async()=>{
+
+    const query=input.value;
+
+    if(query.length===0){
+        suggestions.innerHTML="";
+        return;
+    }
+
+    const response=await fetch(`/suggest?q=${query}`);
+
+    const data=await response.json();
+
+    suggestions.innerHTML="";
+
+    data.forEach(movie=>{
+
+        const div=document.createElement("div");
+
+        div.classList.add("suggestion-item");
+
+        div.innerText=movie;
+
+        div.onclick=()=>{
+
+            input.value=movie;
+
+            suggestions.innerHTML="";
+
+        }
+
+        suggestions.appendChild(div);
+
+    });
+
+});
+
+document.addEventListener("click",function(e){
+
+    if(e.target!==input){
+
+        suggestions.innerHTML="";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
